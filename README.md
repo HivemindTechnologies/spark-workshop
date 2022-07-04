@@ -1,6 +1,6 @@
 # Spark Workshop
 This repository contains the training material for the Spark Workshop. The workshop makes use of 2 main Spark programming APIs: 
-- [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html) )(Chapter 1 and 2)
+- [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html) (Chapter 1 and 2)
 - [Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html) (Chapter 3)  
   
 Each section contains a set of exercises.
