@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  s3:
+    image: localstack/localstack:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=0
+      - AWS_SECRET_ACCESS_KEY=0
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=eu-west-1
+      - HOSTNAME=s3
+      - EDGE_PORT=3000 # aparently you can't specify the port after the service anymore
+    ports:
+      - "3000:3000"
+  init-s3:
+    image: garland/aws-cli-docker
+    command: /bin/sh -c "/testdata/copy_testdata.sh"
+    depends_on:
+      - s3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://s3:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+    environment:
+      - AWS_ACCESS_KEY_ID=0
+      - AWS_SECRET_ACCESS_KEY=0
+      - AWS_DEFAULT_REGION=eu-west-1
+      - AWS_CBOR_DISABLE=true
+    volumes:
+      - ./testdata:/testdata
+
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: hivemind
+      POSTGRES_PASSWORD: hivemind-password
+      POSTGRES_DB: spark-workshop
+    ports:
+      - "5432:5432"

@@ -1,0 +1,12 @@
+/.bsp/
+/.idea/
+target
+project/target
+project/project
+.bloop/
+.metals/
+.vscode/
+project/.bloop/
+project/metals.sbt
+.terraform
+out
