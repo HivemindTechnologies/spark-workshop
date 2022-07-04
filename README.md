@@ -11,6 +11,7 @@ Spark runs on Java 8/11, Scala 2.12/2.13, Python 3.6+ and R 3.5+. Python 3.6 sup
 - Spark 3.2.1
 - Docker
 - SBT 1.6.2
+- Scala 2.13.8
 
 We will be using JSON, csv and parquet formatted data in small samples. You can download the larger examples files here :
 - [amazon-reviews](https://hivemind-share.s3-eu-west-1.amazonaws.com/codingchallenge/resources/amazon-reviews.json.gz)
