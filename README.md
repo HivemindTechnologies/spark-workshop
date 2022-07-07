@@ -9,7 +9,7 @@ It supports a variety of data processing tasks:
 
 Spark is smart enough to optimize your code and the execution of that code on the cluster across different libraries.
 As a computing engine it is detached from data storage and I/O.
-*"When computing a result, the same execution engine is used, independent of which API/language you are using to express the computation. This unification means that developers can easily switch back and forth between different APIs based on which provides the most natural way to express a given transformation."*[Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html)
+*"When computing a result, the same execution engine is used, independent of which API/language you are using to express the computation. This unification means that developers can easily switch back and forth between different APIs based on which provides the most natural way to express a given transformation."* [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html)
 
 This repository contains the training material for the Spark Workshop. The workshop makes use of 2 main Spark programming APIs: 
 - [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html) (Chapter 1 and 2)
@@ -64,9 +64,9 @@ You can run Spark interactively or from a client program:
 In these workshop we will be experimenting with both.   
 
 ## Spark Shell
-Run the following in the Spark Directory
+After our installation setup you just have to run in a terminal:
 ```sh
-$ ./bin/spark-shell
+$ spark-shell
 ```
 
 ## Spark Application
@@ -79,8 +79,8 @@ Spark SQL offers a framework for loading, querying and persisting structured and
 - Hive QL
 
 ### Chapter 1: DataFrames (and Datasets) API
-Data loading, analysis and transformation from different data sources format using Spark SQL library.
-*"A Dataset is a distributed collection of data. Dataset is a new interface added in Spark 1.6 that provides the benefits of RDDs (strong typing, ability to use powerful lambda functions) with the benefits of Spark SQL’s optimized execution engine. A Dataset can be constructed from JVM objects and then manipulated using functional transformations (map, flatMap, filter, etc.)."*[Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html)
+Data loading, analysis and transformation from different data sources format using Spark SQL library.     
+*"A Dataset is a distributed collection of data. Dataset is a new interface added in Spark 1.6 that provides the benefits of RDDs (strong typing, ability to use powerful lambda functions) with the benefits of Spark SQL’s optimized execution engine. A Dataset can be constructed from JVM objects and then manipulated using functional transformations (map, flatMap, filter, etc.)."* [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html)
 
 ### Chapter 2: Using Spark SQL with sql statements
 Spark SQL is an SQL abstraction over DataFrames to enable engineers familiar with databases to use their knowledge on a Spark cluster. It can be run:
