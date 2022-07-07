@@ -1,10 +1,20 @@
 package chapter1
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{approx_count_distinct, avg, col, count, countDistinct, mean, min, regexp_extract, stddev, sum}
+import chapter1.DataFrameSolutions.fromTSVToDf
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, desc, mean, min, regexp_extract, stddev, sum}
+import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 object DataFrameExamples extends App {
 
+  Logger.getLogger("org").setLevel(Level.OFF)
+
+  /**
+   * Spark Configuration
+   */
+
+  // Entry point to programming Spark with the Dataset and DataFrame API
   val spark = SparkSession.builder()
     .appName("DataframesApp")
     .config("spark.master", "local")
@@ -13,126 +23,182 @@ object DataFrameExamples extends App {
   // Non-verbose mode, comment to add INFO logs
   spark.sparkContext.setLogLevel("WARN")
 
-  val titleRatingsDataframe = spark
+  /**
+   * Dataframes section
+   */
+  // Load from different kind of data sources
+  val surfBreaksDataframe: DataFrame = spark
     .read
     .option("header", "true")
-    .option("sep", "\t")
     .option("multiLine", "true")
     .option("quote","\"")
     .option("escape","\"")
     .option("ignoreTrailingWhiteSpace", true)
-    .csv("src/main/resources/data/title-ratings-sample.tsv")
+    .csv("src/main/resources/data/coastal_plan_surf_breaks.csv")
 
-  titleRatingsDataframe.show(4)
-  titleRatingsDataframe.printSchema()
+  val amazonReviewsDataframe: DataFrame = spark
+    .read
+    .option("inferSchema", "true")
+    .json("src/main/resources/data/amazon-reviews-sample.json")
+
+  // Visualize data sample
+  surfBreaksDataframe.show(4)
+  amazonReviewsDataframe.show(4)
+
+  //surfBreaksDataframe.printSchema()
+  amazonReviewsDataframe.printSchema()
+
+  // spark types
+  val longType = LongType
+
+  // schema
+  val sparkSchema: StructType = surfBreaksDataframe.schema
+
+  //println(s"Spark inferred schema for surfBreaksDataframe:\n$sparkSchema")
+
+  val surfBreaksSchema = StructType(Array(
+    StructField("X", DoubleType),
+    StructField("Y", DoubleType),
+    StructField("OBJECTID", IntegerType),
+    StructField("Name", StringType),
+    StructField("Type", StringType),
+    StructField("Scale", IntegerType)
+  ))
+
+  val surfBreaksDataframeWithSchema: DataFrame = spark
+    .read
+    .schema(surfBreaksSchema)
+    .option("header", "true")
+    .option("multiLine", "true")
+    .option("quote","\"")
+    .option("escape","\"")
+    .option("ignoreTrailingWhiteSpace", true)
+    .csv("src/main/resources/data/coastal_plan_surf_breaks.csv")
+
+  surfBreaksDataframeWithSchema.printSchema()
 
   // counting all
-  titleRatingsDataframe.select(count("*")) // count all the rows, and will INCLUDE nulls
+  amazonReviewsDataframe.select(count("*")) // count all the rows, and will INCLUDE nulls
 
   // counting distinct
-  titleRatingsDataframe.select(countDistinct(col("tconst"))).show()
-
-  // approximate count
-  titleRatingsDataframe.select(approx_count_distinct(col("tconst")))
+  amazonReviewsDataframe.select(countDistinct(col("overall")))
 
   // min and max
-  val minRatingDF = titleRatingsDataframe.select(min(col("averageRating")))
-  titleRatingsDataframe.selectExpr("min(averageRating)")
+  amazonReviewsDataframe.select(min(col("overall")))
+  amazonReviewsDataframe.selectExpr("min(overall)")
 
-    // sum
-    titleRatingsDataframe.select(sum(col("numVotes")))
-    titleRatingsDataframe.selectExpr("sum(numVotes)")
+  // sum
+  amazonReviewsDataframe.select(sum(col("overall")))
 
-    // avg
-    titleRatingsDataframe.select(avg(col("numVotes")))
-    titleRatingsDataframe.selectExpr("numVotes")
+  // avg
+  amazonReviewsDataframe.select(avg(col("overall")))
 
-    // data science
-    titleRatingsDataframe.select(
-      mean(col("averageRating")),
-      stddev(col("averageRating"))
-    )
-
-    val aggregationsByNumVotesDF = titleRatingsDataframe
-      .groupBy(col("averageRating"))
-      .agg(
-        count("*").as("ratings"),
-        avg("numVotes").as("AverageNumVotesDifferent")
-      )
-      .orderBy(col("AverageNumVotesDifferent"))
-
-  aggregationsByNumVotesDF.show(4)
-
-
-  val titlePrincipalsDataframe = spark
-    .read
-    .option("header", "true")
-    .option("sep", "\t")
-    .option("multiLine", "true")
-    .option("quote","\"")
-    .option("escape","\"")
-    .option("ignoreTrailingWhiteSpace", true)
-    .csv("src/main/resources/data/title-principals-sample.tsv")
-
-  titlePrincipalsDataframe.show(4)
-
-  val titlePrincipalsDataframe2 = titlePrincipalsDataframe.selectExpr(
-    "tconst",
-    "category"
+  // data science
+  amazonReviewsDataframe.select(
+    mean(col("overall")),
+    stddev(col("overall"))
   )
 
-  val titlePrincipalsDataframe3 = titlePrincipalsDataframe2
-    .select("tconst", "category")
-    .withColumn("titlesId", col("tconst"))
+  // group by
+  val aggregationsByOverallCountDF = amazonReviewsDataframe
+    .groupBy(col("overall"))
+    .agg(
+      count("*").as("cnt"),
+    )
+    .orderBy(asc("overall"))
 
-  val atLeastEight = titleRatingsDataframe.select("tconst", "averageRating")
-    .where(col("averageRating") > 8 and col("numVotes") > 50)
+  aggregationsByOverallCountDF.show()
 
-  val onlyDirectors = titlePrincipalsDataframe.select("tconst", "nconst", "category")
-    .where(col("category") === "director")
+  /**
+   * Datasets section
+   */
+  case class SurfCoast(X: Double,
+                       Y: Double,
+                       OBJECTID: String,
+                       Name: String,
+                       Type: String,
+                       Scale: Option[Int])
 
-  val namesDataframe = spark
-    .read
-    .option("header", "true")
-    .option("sep", "\t")
-    .option("multiLine", "true")
-    .option("quote","\"")
-    .option("escape","\"")
-    .option("ignoreTrailingWhiteSpace", true)
-    .csv("src/main/resources/data/name-basics-sample.tsv")
+  import spark.implicits._
+  val surfDataset = surfBreaksDataframeWithSchema.as[SurfCoast]
 
-  namesDataframe.show(4)
+  // Dataset collection functions: map, flatMap, fold, reduce, for comprehensions ...
+  surfDataset.map(row => row.X * 2)
+  surfDataset.filter(_.Type == "Reef")
 
-  // contains
-  namesDataframe.select("*").where(col("primaryName").contains("Fred")).drop("deathYear").show(4)
 
-  // regex
-  val regexString = "actor|actress"
-  val actorsDataFrame = namesDataframe.select(
-    col("*"),
-    regexp_extract(col("primaryProfession"), regexString, 0).as("regex_extract")
-  ).where(col("regex_extract") =!= "").drop("regex_extract").show(4)
+  // You can also use the dataframe functions!
+  surfDataset.select(avg(col("X")))
 
-  // Joins
-  // inner joins
-  val joinCondition = namesDataframe.col("nconst") === titlePrincipalsDataframe.col("nconst")
-  val principalsWithNamesDataframe = namesDataframe.join(titlePrincipalsDataframe, joinCondition, "inner")
-  principalsWithNamesDataframe.show(4)
+  // Fill Null values!
+  surfBreaksDataframe.select("*").where(col("Scale").isNull)
+  surfBreaksDataframe.na.fill(0, List("Scale"))
+  surfBreaksDataframe.select("Scale").na.drop() // remove rows containing nulls
 
-  // outer joins
-//  namesDataframe.join(titlePrincipalsDataframe, joinCondition, "left_outer")
-//  namesDataframe.join(titlePrincipalsDataframe, joinCondition, "right_outer")
-//  namesDataframe.join(titlePrincipalsDataframe, joinCondition, "outer")
-//  namesDataframe.join(titlePrincipalsDataframe, joinCondition, "left_semi")
+  // Further than Dataset[T]:
+  // Doric github https://github.com/hablapps/doric
+  // Doric Scala Love talk: https://www.youtube.com/watch?v=mJCNIV_9plQ&list=PLBqWQH1MiwBTMk9HV-RNN7sQpB9ZPi_Az&index=17
 
-  // Exercise
-  val ratingJoinCondition = principalsWithNamesDataframe.col("tconst") === titleRatingsDataframe.col("tconst")
-  val finalDataframe = principalsWithNamesDataframe
-    .join(titleRatingsDataframe, ratingJoinCondition, "inner")
-  finalDataframe.show(4)
+  /**
+   * Exercises
+   * 1. Make a dataset of the amazon reviews with only revieweId, overall and asin fields
+   * 2. Rename the overall field as ratings
+   * 2. Count how many ratings are over 3.0
+   * 3. Calculate the average of the ratings column for all the data
+   * 4. Write a reader function reading tsv files
+   */
 
-  // TODO:
-  //  - Add Datasets with case class
-  //  - Add na.fill
-  // - Save transformed data
+  // Load from tsv file
+  val ratingsDf = fromTSVToDf("title-ratings-sample")
+  val principalsDf = fromTSVToDf("title-principals-sample")
+  val crewDf = fromTSVToDf("title-crew-sample")
+  val titleBasicsDf = fromTSVToDf("title-basics-sample")
+  val namesDf = fromTSVToDf("name-basics-sample")
+  val akasDf = fromTSVToDf("title-akas-sample")
+  val episodeDf = fromTSVToDf("title-episode-sample")
+
+    val principalsDf2 = principalsDf.selectExpr(
+      "tconst",
+      "category"
+    )
+
+    // column renamed with select
+    val principalsDf3 = principalsDf2
+      .select("tconst", "category")
+      .withColumn("titlesId", col("tconst"))
+
+    val atLeastEight = ratingsDf.select("tconst", "averageRating")
+      .where(col("averageRating") > 8 and col("numVotes") > 50)
+
+
+    // contains
+    namesDf
+      .select("*")
+      .where(col("primaryName").contains("Fred"))
+      .drop("deathYear")
+
+    // regex
+    val regexString = "actor|actress"
+    val actorsDataFrame = namesDf.select(
+      col("*"),
+      regexp_extract(col("primaryProfession"), regexString, 0).as("regex_extract")
+    ).where(col("regex_extract") =!= "").drop("regex_extract")
+
+    // Joins
+    // inner joins
+    val joinCondition = namesDf.col("nconst") === principalsDf.col("nconst")
+    val principalsWithNamesDataframe = namesDf.join(principalsDf, joinCondition, "inner")
+    principalsWithNamesDataframe.show(4)
+
+    val ratingJoinCondition = principalsWithNamesDataframe.col("tconst") === ratingsDf.col("tconst")
+    val finalDataframe = principalsWithNamesDataframe
+      .join(ratingsDf, ratingJoinCondition, "inner")
+
+  /**
+   * Exercise
+   * 1. Join all the IMDb datasets together except akasDf and episodeDf
+   * 2. From our data samples how many directors got an average ratings superior to 8.0?
+   */
+
+  //Thread.sleep(30000)
 }

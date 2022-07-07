@@ -13,9 +13,15 @@ object SparkShellExamples extends App {
   // Non-verbose mode, comment to add INFO logs
   spark.sparkContext.setLogLevel("WARN")
 
-  /**
-   * Queies sample ran from spark-shell
-   */
+  val people = Seq(
+  ("Marie", 30, "Project Manager"),
+  ("Bob", 50, "Developer"),
+  ("Justine", 34, "Developer")
+  )
+
+  val peopleDf = spark.createDataFrame(people)
+  import spark.implicits._
+  val peopleDf2 = people.toDF("Name", "Age", "Role")
 
   val amazonReviewsDataframe = spark
     .read
@@ -48,5 +54,5 @@ object SparkShellExamples extends App {
     .groupBy(col("reviewerID"))
     .avg("overall")
 
-  avgRatingByReviewerDF.show(4)
 }
+
