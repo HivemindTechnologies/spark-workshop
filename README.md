@@ -99,8 +99,5 @@ Spark is in charge of the metadata and the data. If you drop the table you lose 
 **From external sources (S3, Hive,...)**
 Spark is in charge of the metadata only. If you drop the Spark SQL table, you keep the data.
 
-#### spark-sql
-Interaction from the spark-sql shell.
-
 ## Spark MlLib API
 Applying Machine Learning preprocessing and building prediction models using our dataframes.
